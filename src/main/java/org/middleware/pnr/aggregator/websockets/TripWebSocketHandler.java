@@ -2,7 +2,6 @@ package org.middleware.pnr.aggregator.websockets;
 
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.ServerWebSocket;
-import io.vertx.core.impl.ConcurrentHashSet;
 import io.vertx.core.json.JsonObject;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -12,6 +11,7 @@ import org.middleware.pnr.aggregator.constants.AggregatorConstants;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @RequiredArgsConstructor
@@ -20,7 +20,7 @@ public class TripWebSocketHandler {
     private final EventBus eventBus;
 
 
-    private final Set<ServerWebSocket> clients = new ConcurrentHashSet<>();
+    private final Set<ServerWebSocket> clients = ConcurrentHashMap.newKeySet();
 
 
     @PostConstruct

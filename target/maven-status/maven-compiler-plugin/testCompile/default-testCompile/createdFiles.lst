@@ -1,0 +1,4 @@
+org/middleware/pnr/aggregator/service/TripInfoServiceTest.class
+org/middleware/pnr/aggregator/controller/TripInfoControllerTest.class
+org/middleware/pnr/aggregator/util/ControllerUtilTest.class
+org/middleware/pnr/aggregator/handler/GlobalExceptionHandlerTest.class

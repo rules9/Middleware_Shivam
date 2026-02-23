@@ -8,6 +8,7 @@ import io.vertx.ext.mongo.MongoClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.middleware.pnr.aggregator.constants.AggregatorConstants;
+import org.middleware.pnr.aggregator.exceptions.BookingNotFoundException;
 import org.middleware.pnr.aggregator.model.Booking;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +39,7 @@ public class BookingService {
                             JsonObject resultJson = result.result();
                             if (resultJson == null || resultJson.isEmpty()) {
                                 log.warn("No booking found for PNR: {}", pnr);
-                                bookingPromise.complete(new Booking());
+                                bookingPromise.fail(new BookingNotFoundException("Booking not found for PNR: " + pnr));
 
                             } else {
                                 log.info("Booking found for PNR: {}", pnr);
@@ -82,7 +83,7 @@ public class BookingService {
                             JsonObject resultJson = result.result();
                             if (resultJson == null || resultJson.isEmpty()) {
                                 log.warn("No booking found for customer ID: {}", customerId);
-                                bookingPromise.complete(new Booking());
+                                bookingPromise.fail(new BookingNotFoundException("Booking not found for customer ID: " + customerId));
                             } else {
                                 log.info("Booking found for customer ID: {}", customerId);
                                 Booking booking = resultJson.mapTo(Booking.class);

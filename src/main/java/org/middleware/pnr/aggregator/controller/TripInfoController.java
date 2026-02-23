@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.middleware.pnr.aggregator.dto.TripResponse;
+import org.middleware.pnr.aggregator.exceptions.BookingNotFoundException;
 import org.middleware.pnr.aggregator.service.RateLimiterService;
 import org.middleware.pnr.aggregator.service.TripInfoService;
 import org.springframework.http.HttpStatus;
@@ -57,6 +58,10 @@ public class TripInfoController {
                                         ResponseEntity.status(503).build()
                                 );
                             }
+                            if (err instanceof BookingNotFoundException ||
+                                (err.getCause() != null && err.getCause() instanceof BookingNotFoundException)) {
+                                return Future.failedFuture(err);
+                            }
                             return Future.succeededFuture(
                                     ResponseEntity.internalServerError().build());
                         })
@@ -92,6 +97,10 @@ public class TripInfoController {
                                 return Future.succeededFuture(
                                         ResponseEntity.status(503).build()
                                 );
+                            }
+                            if (err instanceof BookingNotFoundException ||
+                                (err.getCause() != null && err.getCause() instanceof BookingNotFoundException)) {
+                                return Future.failedFuture(err);
                             }
                             return Future.succeededFuture(
                                     ResponseEntity.internalServerError().build());

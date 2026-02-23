@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.middleware.pnr.aggregator.constants.AggregatorConstants;
 import org.middleware.pnr.aggregator.dto.TripResponse;
+import org.middleware.pnr.aggregator.exceptions.BookingNotFoundException;
 import org.middleware.pnr.aggregator.mapper.TripResponseMapper;
 import org.middleware.pnr.aggregator.model.*;
 import org.springframework.stereotype.Service;
@@ -51,23 +52,27 @@ public class TripInfoService {
         log.info("TripInfoService: Fetching tripInfo for pnr: {}", pnr);
         logEventBusEvent(AggregatorConstants.PNR, pnr);
 
-        return bookingService.getBookingByPnr(pnr)
-                .compose(booking -> {
-                    log.info("TripInfoService: Received booking info.");
-                    if (booking.getPnr() == null || booking.getPassengers() == null || booking.getPassengers().isEmpty()) {
-                        log.warn("TripInfoService: Booking info for pnr: {} is not present, creating empty trip.", pnr);
-                        TripInfo tripInfo = new TripInfo();
-                        tripInfo.setBooking(booking);
-                        tripInfo.setBaggage(Collections.emptyList());
-                        return Future.succeededFuture(tripInfo);
-                    }
+        Future<Booking> bookingFuture = bookingService.getBookingByPnr(pnr);
+        Future<List<Baggage>> baggageFutureList = baggageService.getBaggageByPNR(pnr)
+                .recover(err -> Future.succeededFuture(Collections.emptyList()));
 
-                    log.info("TripInfoService: Adding baggage details for booking for pnr : {}", pnr);
-                    return baggageService.getBaggageByPNR(pnr)
-                            .recover(err -> Future.succeededFuture(Collections.emptyList()))
-                            .compose(baggages -> enrichTripInfoWithETicket(pnr, baggages, booking));
-                })
-                .compose(tripResponseMapper::mapToTripResponse);
+
+        return Future.all(bookingFuture,baggageFutureList)
+                .compose(compositeFuture -> {
+                    Booking booking = compositeFuture.resultAt(0);
+                    List<Baggage> baggages = compositeFuture.resultAt(1);
+
+                    log.info("TripInfoService: received booking and baggage information.");
+
+                    if(booking.getPnr() == null || booking.getPassengers() == null){
+                        log.warn("TripInfoService: Booking info for pnr: {} is not present, creating empty trip.", pnr);
+                        return Future.failedFuture(new BookingNotFoundException("Booking not found for pnr: " + pnr));
+                    }
+                    log.info("TripInfoService: Enriching trip info with eTickets for pnr: {}", pnr);
+                    return enrichTripInfoWithETicket(pnr, baggages, booking);
+                }).compose(tripResponseMapper::mapToTripResponse);
+
+
     }
 
     private Future<TripInfo> enrichTripInfoWithETicket(String pnr, List<Baggage> baggages, Booking booking) {

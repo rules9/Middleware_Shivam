@@ -1,0 +1,20 @@
+mongodb:
+  host: ${MONGO_HOST:localhost}
+  port: ${MONGO_PORT:27017}
+  database: ${MONGO_DB:pnrdb}
+
+circuit-breaker:
+  max-failures: ${CIRCUIT_BREAKER_MAX_FAILURES:3}
+  timeout: ${CIRCUIT_BREAKER_TIMEOUT:2000}
+  reset-timeout: ${CIRCUIT_BREAKER_RESET_TIMEOUT:10000}
+
+rate-limiter:
+  max-requests: ${RATE_LIMITER_MAX_REQUESTS:10}
+  time-window-seconds: ${RATE_LIMITER_TIME_WINDOW:10}
+
+spring:
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
